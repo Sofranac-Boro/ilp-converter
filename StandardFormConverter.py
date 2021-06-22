@@ -10,6 +10,9 @@ class StandardFormConverter:
         # x+ takes on the index of x (key), and x- is assigned a new index (value)
         self.var_dict: Dict[int, int] = {}
 
+        #keep track of the slack basis. This is useful for the initialization of LP algorithms
+        self.slack_basis = []
+
         self.bounds_done = False
         self.senses_done = False
 
@@ -60,16 +63,29 @@ class StandardFormConverter:
 
     def handle_sense(self):
         for cons in range(self.prb.ncons):
+            slack_var_idx = self.prb.add_column()
+            self.slack_basis.append(slack_var_idx)
+
             if self.prb.get_sense(cons) == Sense.EQ:
-                pass # nothing to do, already in the form we need
+                # even though the equality sense is what we need, we add an artificial column in order to have a
+                # full invertible slack basis that can be used to e.g. intialize simplex.
+                self.prb.set_coeff(cons, slack_var_idx, 1.0)
+
+                # now we add another constraint to fix the newly added variable to 0.
+                new_cons = self.prb.add_cons(Sense.EQ, 0.0)
+                self.prb.set_coeff(new_cons, slack_var_idx, 1.0)
+
             elif self.prb.get_sense(cons) == Sense.LE:
-                slack_var_idx = self.prb.add_column()
                 self.prb.set_coeff(cons, slack_var_idx, -1.0)
                 self.prb.set_sense(cons, Sense.EQ)
+
             elif self.prb.get_sense(cons) == Sense.GE:
-                slack_var_idx = self.prb.add_column()
                 self.prb.set_coeff(cons, slack_var_idx, 1.0)
                 self.prb.set_sense(cons, Sense.EQ)
+            else:
+                raise Exception("Unknown sense: ", self.prb.get_sense(cons))
+
+        assert len(self.slack_basis) == self.prb.ncons
 
     def to_standard_form(self):
         self.handle_bounds()
