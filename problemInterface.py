@@ -93,7 +93,7 @@ class ProblemDense(ProblemInterface):
         self.lbs = lbs
         self.ubs = ubs
         self.senses = senses
-        self.rhss = rhss
+        self.b = rhss
         self.costs = costs
 
     def add_cons(self, sense: Sense, rhs: float) -> int:
@@ -101,7 +101,7 @@ class ProblemDense(ProblemInterface):
         self.ncons += 1
 
         self.senses.append(sense)
-        self.rhss.append(rhs)
+        self.b.append(rhs)
 
         return self.ncons -1 # index of the added cons
 
@@ -162,7 +162,7 @@ class ProblemDense(ProblemInterface):
         assert len(self.costs) == self.nvars
         assert self.A.shape[0] == self.ncons
         assert self.A.shape[1] == self.nvars
-        assert len(self.rhss) == self.ncons
+        assert len(self.b) == self.ncons
         assert len(self.senses) == self.ncons
 
         for sense in self.senses:

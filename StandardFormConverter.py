@@ -76,11 +76,11 @@ class StandardFormConverter:
                 self.prb.set_coeff(new_cons, slack_var_idx, 1.0)
 
             elif self.prb.get_sense(cons) == Sense.LE:
-                self.prb.set_coeff(cons, slack_var_idx, -1.0)
+                self.prb.set_coeff(cons, slack_var_idx, 1.0)
                 self.prb.set_sense(cons, Sense.EQ)
 
             elif self.prb.get_sense(cons) == Sense.GE:
-                self.prb.set_coeff(cons, slack_var_idx, 1.0)
+                self.prb.set_coeff(cons, slack_var_idx, -1.0)
                 self.prb.set_sense(cons, Sense.EQ)
             else:
                 raise Exception("Unknown sense: ", self.prb.get_sense(cons))
