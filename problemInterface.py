@@ -2,7 +2,7 @@ from scipy.sparse import csr_matrix, csc_matrix
 import numpy as np
 from typing import List, Tuple
 from enum import Enum
-from .utils import INF, EPSGE, EPSLE, EPSEQ
+from .utils import INF, EPSGE, EPSLE, EPSEQ, flatten_list
 from abc import ABC, abstractmethod
 
 
@@ -76,11 +76,23 @@ class ProblemInterface(ABC):
         pass
 
     @abstractmethod
-    def check_problem_validity(self):
+    def get_rhs(self, cons: int) -> float:
+        pass
+
+    @abstractmethod
+    def set_rhs(self, cons: int, val: float):
+        pass
+
+    @abstractmethod
+    def check_problem_validity(self, slack_basis: List[int]) -> None:
         pass
 
     @abstractmethod
     def to_csc(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        pass
+
+    @abstractmethod
+    def copy_cons(self, cons: int) -> int:
         pass
 
 
@@ -104,6 +116,14 @@ class ProblemDense(ProblemInterface):
         self.b.append(rhs)
 
         return self.ncons -1 # index of the added cons
+
+    def copy_cons(self, cons: int) -> int:
+        new_cons_idx = self.add_cons(self.get_sense(cons), self.get_rhs(cons))
+
+        for var in range(self.nvars):
+            self.set_coeff(new_cons_idx, var, self.get_coeff(cons, var))
+
+        return new_cons_idx # return index of the new cons
 
     def set_coeff(self, cons_idx: int, var_idx: int, val: float):
         self.A[cons_idx, var_idx] = val
@@ -156,7 +176,13 @@ class ProblemDense(ProblemInterface):
     def set_sense(self, cons: int, val: Sense):
         self.senses[cons] = val
 
-    def check_problem_validity(self):
+    def get_rhs(self, cons: int) -> float:
+        return self.b[cons]
+
+    def set_rhs(self, cons: int, val: float):
+        self.b[cons] = val
+
+    def check_problem_validity(self, slack_basis: List[int]) -> None:
         assert len(self.ubs) == self.nvars
         assert len(self.lbs) == self.nvars
         assert len(self.costs) == self.nvars
@@ -171,6 +197,23 @@ class ProblemDense(ProblemInterface):
         for var in range(self.nvars):
             assert self.is_ub_inf(var)
             assert self.is_lb_zero(var)
+
+        self.check_for_zero_cols()
+        self.check_if_slack_basis_is_identity(slack_basis)
+
+    def check_for_zero_cols(self) -> None:
+        for col in range(self.nvars):
+            assert any(flatten_list(self.A[:,col]))
+
+    def check_if_slack_basis_is_identity(self, slack_basis: List[int]) -> None:
+        basis = self.A[:,slack_basis]
+
+        for i in range(self.ncons):
+            for j in range(self.ncons):
+                if i == j:
+                    assert np.isclose(1.0, abs(basis[i, j])) # can be + or - 1
+                else:
+                    assert np.isclose(0.0, basis[i, j])
 
     def to_csc(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         csc = csc_matrix(self.A)

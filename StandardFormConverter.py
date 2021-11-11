@@ -15,6 +15,16 @@ class StandardFormConverter:
 
         self.bounds_done = False
         self.senses_done = False
+        self.equality_cons_replaced = False
+
+    def replace_equality_constraints(self):
+        for cons in range(self.prb.ncons):
+            if self.prb.get_sense(cons) == Sense.EQ:
+                new_cons_idx = self.prb.copy_cons(cons)
+                # now set old cons as <= and new as >=
+                self.prb.set_sense(cons, Sense.LE)
+                self.prb.set_sense(new_cons_idx, Sense.GE)
+        self.equality_cons_replaced = True
 
     def handle_bounds(self):
         for var in range(self.prb.nvars):
@@ -62,20 +72,17 @@ class StandardFormConverter:
                 self.prb.set_cost(self.var_dict[var], - cost)
 
     def handle_sense(self):
+        assert self.bounds_done
+        assert self.equality_cons_replaced
+
+        self.slack_basis_size = self.prb.ncons
         for cons in range(self.prb.ncons):
             slack_var_idx = self.prb.add_column()
             self.slack_basis.append(slack_var_idx)
 
-            if self.prb.get_sense(cons) == Sense.EQ:
-                # even though the equality sense is what we need, we add an artificial column in order to have a
-                # full invertible slack basis that can be used to e.g. intialize simplex.
-                self.prb.set_coeff(cons, slack_var_idx, 1.0)
+            assert self.prb.get_sense(cons) != Sense.EQ
 
-                # now we add another constraint to fix the newly added variable to 0.
-                new_cons = self.prb.add_cons(Sense.EQ, 0.0)
-                self.prb.set_coeff(new_cons, slack_var_idx, 1.0)
-
-            elif self.prb.get_sense(cons) == Sense.LE:
+            if self.prb.get_sense(cons) == Sense.LE:
                 self.prb.set_coeff(cons, slack_var_idx, 1.0)
                 self.prb.set_sense(cons, Sense.EQ)
 
@@ -87,11 +94,13 @@ class StandardFormConverter:
 
         assert len(self.slack_basis) == self.prb.ncons
 
-    def to_standard_form(self):
+    def to_standard_form(self, check_validity: bool = False):
+        self.replace_equality_constraints()
         self.handle_bounds()
         self.replace_variables()
         self.handle_sense()
-        self.prb.check_problem_validity()
+        if check_validity:
+            self.prb.check_problem_validity(self.slack_basis)
 
 
 

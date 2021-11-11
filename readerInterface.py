@@ -58,6 +58,10 @@ class FileReaderInterface(ABC):
     def get_rhss(self) -> List[float]:
         pass
 
+    @abstractmethod
+    def simplex_solve(self) -> None:
+        pass
+
 
 class PythonMIPReader(FileReaderInterface):
     def __init__(self, input_file: str, model: Model = None) -> None:
@@ -163,6 +167,11 @@ class PythonMIPReader(FileReaderInterface):
             conversion_dict.get,
             python_mip_vartypes
         ))
+
+
+    def simplex_solve(self) -> None:
+        assert self.is_minimization_problem()
+        self.m.optimize()
 
 
 # Instantiation

@@ -12,3 +12,6 @@ def EPSGT(x, y):
     return x-y > EPS
 def EPSEQ(x, y):
     return abs(x-y) <= EPS
+
+def flatten_list(l):
+    return [item for sublist in l for item in sublist]
