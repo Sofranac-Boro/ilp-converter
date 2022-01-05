@@ -59,7 +59,7 @@ class FileReaderInterface(ABC):
         pass
 
     @abstractmethod
-    def simplex_solve(self) -> None:
+    def solve(self) -> None:
         pass
 
 
@@ -169,7 +169,7 @@ class PythonMIPReader(FileReaderInterface):
         ))
 
 
-    def simplex_solve(self) -> None:
+    def solve(self) -> None:
         assert self.is_minimization_problem()
         self.m.optimize()
 

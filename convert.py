@@ -17,6 +17,9 @@ def from_mip_model(path_to_file) -> None:
 
     reader: FileReaderInterface = get_reader(path_to_file)
 
+    # Optinal. Solve the problem
+    reader.solve()
+
     n_cons = reader.get_n_cons()
     n_vars = reader.get_n_vars()
     coeffs, row_ptrs, col_indices = reader.get_cons_matrix()
@@ -31,6 +34,8 @@ def from_mip_model(path_to_file) -> None:
     print("A before convering to LP standard form:\n", converter.prb.A)
     converter.to_standard_form()
     print("A after converting to LP standard form:\n", converter.prb.A)
+
+
 
 
 if __name__ == "__main__":
