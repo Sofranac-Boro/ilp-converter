@@ -13,26 +13,12 @@ def csr_to_csc(m, n, vals, col_indices, row_ptrs):
     return A.data, A.indices, A.indptr
 
 
-def from_mip_model() -> None:
+def from_mip_model(path_to_file) -> None:
 
-    n_cons = 3
-    n_vars = 4
+    reader: FileReaderInterface = get_reader(path_to_file)
 
-    m = mip.Model()
-    x1 = m.add_var("x1", 2,100, 2)
-    x2 = m.add_var("x2", 2,mip.INF, 5)
-    x3 = m.add_var("x3", 2,mip.INF, -1)
-    x4 = m.add_var("x4", -2,mip.INF, -1)
-
-    m += x1 + x2 + x3 + x4 <= 10
-    m +=         5*x3 + x4 >= 1
-    m += 5*x1 +  1*x3 + 1*x4 >= 5
-
-    reader: FileReaderInterface = get_reader("", model=m)
-
-    # to read from file, just use:
-    # reader: FileReaderInterface = get_reader(path_to_file)
-
+    n_cons = reader.get_n_cons()
+    n_vars = reader.get_n_vars()
     coeffs, row_ptrs, col_indices = reader.get_cons_matrix()
     lbs, ubs = reader.get_var_bounds()
     senses = reader.get_senses()
@@ -42,9 +28,9 @@ def from_mip_model() -> None:
     prb: ProblemInterface = get_problem(n_cons, n_vars, coeffs, col_indices, row_ptrs, lbs, ubs, senses, rhss, costs)
     converter: StandardFormConverter = StandardFormConverter(prb)
 
-    print("A before:\n", converter.prb.A)
+    print("A before convering to LP standard form:\n", converter.prb.A)
     converter.to_standard_form()
-    print("A after:\n", converter.prb.A)
+    print("A after converting to LP standard form:\n", converter.prb.A)
 
 
 if __name__ == "__main__":
@@ -53,7 +39,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        from_mip_model()
+        from_mip_model(args.file)
     except Exception as e:
         print("\nexecution of ", args.file, " failed. Exception: ")
         print(e)

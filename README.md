@@ -7,7 +7,7 @@ Reads a LP or a MIP from a file and converts it to standard form.
 
 ## usage
 
-See example_usage.py
+python3 convert.py -f "23588.mps.gz"
 
 ## Dependencies
 ```

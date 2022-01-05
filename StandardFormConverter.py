@@ -1,6 +1,6 @@
 from typing import Dict
-from .problemInterface import ProblemInterface, Sense
-from .utils import INF
+from problemInterface import ProblemInterface, Sense
+from utils import INF
 
 
 class StandardFormConverter:

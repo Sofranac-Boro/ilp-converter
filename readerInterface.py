@@ -5,7 +5,7 @@ import tempfile
 import os
 
 from mip import Model, LinExpr, Var
-from .problemInterface import Sense
+from problemInterface import Sense
 
 
 class FileReaderInterface(ABC):

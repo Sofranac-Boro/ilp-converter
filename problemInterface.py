@@ -2,7 +2,7 @@ from scipy.sparse import csr_matrix, csc_matrix
 import numpy as np
 from typing import List, Tuple
 from enum import Enum
-from .utils import INF, EPSGE, EPSLE, EPSEQ, flatten_list
+from utils import INF, EPSGE, EPSLE, EPSEQ, flatten_list
 from abc import ABC, abstractmethod
 
 
